@@ -22,7 +22,6 @@ def show_menu():
     print("4️⃣ Next appointment")
     print("5️⃣ Daily reminder configuration")
 
-
 def main():
     """
     Entry point of the WhatsApp Calendar.
@@ -37,27 +36,34 @@ def main():
     """
     valid_choices = {'1', '2', '3', '4', '5'}
 
-    while True:
-        show_menu()
-        choice = input("Please select an option (1-5): ").strip()
+    show_menu()
+    choice = input("Enter a number 1-5 to select an option: ")
 
+    while True:
         if choice in valid_choices:
             if choice == '1':
                 pass
+                show_menu()
             elif choice == '2':
                 pass
+                show_menu()
             elif choice == '3':
                 pass
+                show_menu()
             elif choice == '4':
                 pass
+                show_menu()
             elif choice == '5':
                 pass
-        else:
-            print(Fore.RED + "❌ Invalid choice. Please enter a number between 1 and 5." + Style.RESET_ALL)
+                show_menu()
+            else:
+                print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
+                show_menu()
 
 
-
-try:
-    main()
-except KeyboardInterrupt:
-    print(Fore.RED + "\nProgram terminated by user." + Style.RESET_ALL)
+if __name__ == "__main__":
+    show_menu()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print(Fore.RED + "\nProgram terminated by user." + Style.RESET_ALL)
