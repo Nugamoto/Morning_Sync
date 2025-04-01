@@ -1,5 +1,7 @@
 from colorama import Fore, Style
 
+from services.google_calendar import get_events_for_today, get_events_for_tomorrow, get_events_for_the_week, get_next_event
+
 
 def show_menu():
     """
@@ -36,30 +38,26 @@ def main():
     """
     valid_choices = {'1', '2', '3', '4', '5'}
 
-    show_menu()
-    choice = input("Enter a number 1-5 to select an option: ")
-
     while True:
+        choice = input("Enter a number 1-5 to select an option: ")
         if choice in valid_choices:
             if choice == '1':
-                pass
+                print(get_events_for_today())
                 show_menu()
             elif choice == '2':
-                pass
+                print(get_events_for_tomorrow())
                 show_menu()
             elif choice == '3':
-                pass
+                print(get_events_for_the_week())
                 show_menu()
             elif choice == '4':
-                pass
+                print(get_next_event())
                 show_menu()
             elif choice == '5':
-                pass
                 show_menu()
             else:
                 print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
                 show_menu()
-
 
 if __name__ == "__main__":
     show_menu()
