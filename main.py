@@ -1,67 +1,104 @@
+import time
+from datetime import datetime
 from colorama import Fore, Style
+from dotenv import load_dotenv
+import os
 
-from services.google_calendar import get_events_for_today, get_events_for_tomorrow, get_events_for_the_week, get_next_event
+from services.google_calendar import (
+    get_events_for_today,
+    get_events_for_tomorrow,
+    get_events_for_the_week,
+    get_next_event,
+)
+
+from utils.formatter import (
+    format_today,
+    format_tomorrow,
+    format_week,
+    format_next_event,
+)
+from services.twilio_api import send_message, fetch_message
+
+load_dotenv()
+DAILY_REMINDER_TIME = os.getenv("DAILY_REMINDER_TIME")
 
 
 def show_menu():
     """
-    Display the main menu options to the user.
-    This function prints a numbered list of available actions,
-    allowing the user to choose which set of calendar events they
-    want to view or to access the daily reminder configuration.
+    Sends the main menu to the user via WhatsApp.
 
-    Menu options include:
-        1 - Show today's appointments
-        2 - Show tomorrow's appointments
-        3 - Show appointments for the week
-        4 - Show the next appointment
-        5 - Configure daily reminder settings
+    This function formats and sends a menu message that displays
+    the available calendar options the user can interact with:
+        1 - View today's appointments
+        2 - View tomorrow's appointments
+        3 - View this week's appointments
+        4 - View the next upcoming appointment
+
+    The menu is sent using the Twilio API's send_message() function.
     """
-    print("\n📱WhatsApp Calendar Menu")
-    print("1️⃣ Today's appointments")
-    print("2️⃣ Tomorrow's appointments")
-    print("3️⃣ Appointments for the week")
-    print("4️⃣ Next appointment")
-    print("5️⃣ Daily reminder configuration")
+    menu = ("\n\U0001F4F1 WhatsApp Kalendar Menü\n"
+            "\u0031\uFE0F\u20E3 Heutige Termine\n"
+            "\u0032\uFE0F\u20E3 Termine für morgen\n"
+            "\u0033\uFE0F\u20E3 Termine für die Woche\n"
+            "\u0034\uFE0F\u20E3 Nächster Termin\n")
+    send_message(menu)
 
-def main():
+
+def main_loop():
     """
-    Entry point of the WhatsApp Calendar.
+    Continuously runs the main application loop for the WhatsApp Calendar bot.
+    This function performs the following tasks every second:
+        - Checks whether the current time matches the configured daily reminder time
+            (as set in the .env file). If so, and if the reminder hasn't already been sent
+            today, it sends the list of today's calendar events.
+        - Listens for new incoming WhatsApp messages via fetch_message().
+            If a valid command (1–4) is received, the corresponding calendar
+            information is retrieved and sent as a message.
+        - Sends an error message and re-displays the menu for invalid inputs.
 
-    This function initializes a continuous loop that:
-        - displays the menu to the user
-        - accepts a numeric input
-        - calls the corresponding function from the services module
-
-    It ensures valid input and guides the user through the available
-    features step by step.
+    The function ensures that daily reminders are only sent once per day
+    and gracefully handles exceptions to prevent the loop from crashing.
     """
-    valid_choices = {'1', '2', '3', '4', '5'}
+    valid_choices = {'1', '2', '3', '4'}
+    last_message = None
+    last_reminder_sent_date = None
 
     while True:
-        choice = input("Enter a number 1-5 to select an option: ")
-        if choice in valid_choices:
-            if choice == '1':
-                print(get_events_for_today())
-                show_menu()
-            elif choice == '2':
-                print(get_events_for_tomorrow())
-                show_menu()
-            elif choice == '3':
-                print(get_events_for_the_week())
-                show_menu()
-            elif choice == '4':
-                print(get_next_event())
-                show_menu()
-            elif choice == '5':
-                show_menu()
-            else:
-                print(Fore.RED + "Invalid choice. Please try again." + Style.RESET_ALL)
-                show_menu()
+        try:
+            now = datetime.now()
+            current_time_str = now.strftime("%H:%M")
+            today_str = now.strftime("%Y-%m-%d")
+
+            if current_time_str == DAILY_REMINDER_TIME and last_reminder_sent_date != today_str:
+                send_message(format_today(get_events_for_today()))
+                last_reminder_sent_date = today_str
+
+            message = fetch_message()
+            if message and message != last_message:
+                last_message = message
+                if message in valid_choices:
+                    if message == '1':
+                        send_message(format_today(get_events_for_today()))
+                    elif message == '2':
+                        send_message(format_tomorrow(get_events_for_tomorrow()))
+                    elif message == '3':
+                        send_message(format_week(get_events_for_the_week()))
+                    elif message == '4':
+                        send_message(format_next_event(get_next_event()))
+                else:
+                    send_message("Ungültige Eingabe. Bitte 1-4 senden.")
+                    show_menu()
+
+            time.sleep(1)
+
+        except Exception as e:
+            print(Fore.RED + f"Fehler im main_loop: {e}" + Style.RESET_ALL)
+            time.sleep(1)
+
 
 if __name__ == "__main__":
     show_menu()
     try:
-        main()
+        main_loop()
     except KeyboardInterrupt:
-        print(Fore.RED + "\nProgram terminated by user." + Style.RESET_ALL)
+        print(Fore.RED + "\nProgramm wurde vom Benutzer beendet." + Style.RESET_ALL)
