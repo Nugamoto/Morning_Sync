@@ -1,11 +1,18 @@
+import os
 import os.path
 import pickle
+import time
 from datetime import datetime, timedelta
 
 import pytz
+from dotenv import load_dotenv
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+
+from utils.formatter import format_today
+
+last_sent_date = None
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
 timezone = pytz.timezone("Europe/Berlin")
@@ -256,3 +263,49 @@ def get_next_event():
 
     summary = next_event.get("summary", "kein titel")
     return [f"– {all_events[0][0].isoformat()} Uhr: {summary}"]
+
+
+def get_daily_reminder():
+    """
+    Checks if the current time matches the configured reminder time and returns a formatted
+    list of today's events if it hasn't been sent yet today.
+
+    The reminder time is configured via the environment variable 'DAILY_REMINDER_TIME' in the format 'HH:MM'.
+    This function ensures that the reminder is only sent once per day.
+
+    Returns:
+        str or None: A formatted string of today's events if the reminder should be sent, otherwise None.
+    """
+    global last_sent_date
+
+    load_dotenv()
+    reminder_time_str = os.getenv("DAILY_REMINDER_TIME", "08:00")  # Format: "HH:MM"
+    reminder_hour, reminder_minute = map(int, reminder_time_str.split(":"))
+
+    local_tz = timezone
+    now = datetime.now(local_tz)
+
+    if now.hour == reminder_hour and now.minute == reminder_minute:
+        if last_sent_date != now.date():
+            events = get_events_for_today()
+            message = format_today(events)
+            last_sent_date = now.date()
+            return message
+    return None
+
+
+def reminder_loop(send_func):
+    """
+    Continuously checks whether it's time to send the daily reminder and sends it using the provided function.
+
+    This loop runs indefinitely, checking every 30 seconds if the reminder message should be sent. If so, it calls
+    the provided `send_func` with the generated message.
+
+    Args:
+        send_func (Callable[[str], None]): A function that takes a string message and handles sending it.
+    """
+    while True:
+        message = get_daily_reminder()
+        if message:
+            send_func(message)
+        time.sleep(30)
