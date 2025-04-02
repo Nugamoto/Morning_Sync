@@ -318,4 +318,5 @@ def reminder_loop(send_func):
         message = get_daily_reminder()
         if message:
             send_func(message)
+            print("Sent MorningSync Message")
         time.sleep(30)
