@@ -13,7 +13,6 @@ from googleapiclient.discovery import build
 from utils.formatter import format_today
 from services.weather import get_weather_forecast
 
-
 last_sent_date = None
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
@@ -265,3 +264,58 @@ def get_next_event():
 
     summary = next_event.get("summary", "kein titel")
     return [f"– {all_events[0][0].isoformat()} Uhr: {summary}"]
+
+
+def get_daily_reminder():
+    """
+    Checks if the current time matches the configured reminder time and returns a formatted
+    list of today's events if it hasn't been sent yet today.
+    Generates a daily reminder message with today's calendar events and optional weather info.
+
+    The reminder time is configured via the environment variable 'DAILY_REMINDER_TIME' in the format 'HH:MM'.
+    This function ensures that the reminder is only sent once per day.
+    The function checks if the current time matches the configured reminder time. If the reminder
+    has not yet been sent today, it formats a message including today's calendar events. If enabled
+    via environment settings, it will also append a weather summary to the message.
+
+    Returns:
+        str or None: A formatted string of today's events if the reminder should be sent, otherwise None.
+        str or None: The reminder message string if it is time to send it, otherwise None.
+    """
+    global last_sent_date
+
+    load_dotenv()
+    reminder_time_str = os.getenv("DAILY_REMINDER_TIME", "08:00")  # Format: "HH:MM"
+    reminder_hour, reminder_minute = map(int, reminder_time_str.split(":"))
+
+    local_tz = timezone
+    now = datetime.now(local_tz)
+
+    if now.hour == reminder_hour and now.minute == reminder_minute:
+        if last_sent_date != now.date():
+            events = get_events_for_today()
+            message = format_today(events)
+            weather = get_weather_forecast()
+            if weather:
+                city = os.getenv("CITY", "deiner Stadt")
+                message += f"\n\n\U0001F324 Wetter heute in {city}: {weather}"
+            last_sent_date = now.date()
+            return message
+    return None
+
+
+def reminder_loop(send_func):
+    """
+    Continuously checks whether it's time to send the daily reminder and sends it using the provided function.
+
+    This loop runs indefinitely, checking every 30 seconds if the reminder message should be sent. If so, it calls
+    the provided `send_func` with the generated message.
+
+    Args:
+        send_func (Callable[[str], None]): A function that takes a string message and handles sending it.
+    """
+    while True:
+        message = get_daily_reminder()
+        if message:
+            send_func(message)
+        time.sleep(30)
