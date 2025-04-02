@@ -11,6 +11,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
 from utils.formatter import format_today
+from services.weather import get_weather_forecast
+
 
 last_sent_date = None
 
@@ -267,14 +269,14 @@ def get_next_event():
 
 def get_daily_reminder():
     """
-    Checks if the current time matches the configured reminder time and returns a formatted
-    list of today's events if it hasn't been sent yet today.
+    Generates a daily reminder message with today's calendar events and optional weather info.
 
-    The reminder time is configured via the environment variable 'DAILY_REMINDER_TIME' in the format 'HH:MM'.
-    This function ensures that the reminder is only sent once per day.
+    The function checks if the current time matches the configured reminder time. If the reminder
+    has not yet been sent today, it formats a message including today's calendar events. If enabled
+    via environment settings, it will also append a weather summary to the message.
 
     Returns:
-        str or None: A formatted string of today's events if the reminder should be sent, otherwise None.
+        str or None: The reminder message string if it is time to send it, otherwise None.
     """
     global last_sent_date
 
@@ -289,6 +291,10 @@ def get_daily_reminder():
         if last_sent_date != now.date():
             events = get_events_for_today()
             message = format_today(events)
+            weather = get_weather_forecast()
+            if weather:
+                city = os.getenv("CITY", "deiner Stadt")
+                message += f"\n\n\U0001F324 Wetter heute in {city}: {weather}"
             last_sent_date = now.date()
             return message
     return None
