@@ -32,7 +32,7 @@ def authenticate_google():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file('../credentials.json', SCOPES)
+            flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
             creds = flow.run_local_server(port=8080)
 
         with open('token.pkl', 'wb') as token:
@@ -69,7 +69,7 @@ def get_events_for_today():
     now = datetime.now(timezone)
     end_of_day = now.replace(hour=23, minute=59, second=59)
 
-    today = ["Termine für heute"]
+    today = []
 
     calendar_ids = list_calendars()
     for cal_id in calendar_ids:
@@ -87,9 +87,6 @@ def get_events_for_today():
             start = event['start'].get('dateTime', event['start'].get('date'))
             summary = event.get('summary', 'Kein Titel')
             today.append(f"– {start} Uhr: {summary}")
-
-    if not today:
-        return ["Keine Termine"]
 
     return today
 
@@ -111,7 +108,7 @@ def get_events_for_tomorrow():
     start_of_tomorrow = timezone.localize(datetime(tomorrow.year, tomorrow.month, tomorrow.day, 0, 0, 0))
     end_of_tomorrow = timezone.localize(datetime(tomorrow.year, tomorrow.month, tomorrow.day, 23, 59, 59))
 
-    tomorrow = ["Termine für morgen"]
+    tomorrow = []
 
     calendar_ids = list_calendars()
     for cal_id in calendar_ids:
@@ -145,17 +142,19 @@ def get_events_for_the_week():
     service = authenticate_google()
 
     now = datetime.now(timezone)
-    today = timezone.localize(datetime(now.year, now.month, now.day, 0, 0, 0))
-    start_of_week = today + timedelta(days=7)
-    end_of_week = timezone.localize(datetime(start_of_week.year, start_of_week.month, start_of_week.day, 23, 59, 59))
+    today = timezone.localize(datetime(now.year, now.month, now.day, now.hour, now.minute, now.second))
 
-    week = ["Termine der Woche"]
+    days_until_end_of_week = 6 - today.weekday()
+    end_of_week = today + timedelta(days=days_until_end_of_week)
+    end_of_week = timezone.localize(datetime(end_of_week.year, end_of_week.month, end_of_week.day, 23, 59, 59))
+
+    week = []
 
     calendar_ids = list_calendars()
     for cal_id in calendar_ids:
         events_result = service.events().list(
             calendarId=cal_id,
-            timeMin=start_of_week.isoformat(),
+            timeMin=today.isoformat(),
             timeMax=end_of_week.isoformat(),
             singleEvents=True,
             orderBy='startTime'
@@ -175,8 +174,8 @@ def get_next_event():
     """
     Retrieves the next upcoming event from all available calendars.
 
-    The function collects the next event from each calendar, determines the soonest event,
-    and returns it formatted as a list of strings.
+    The function collects the next event from each calendar, determines the soonest event
+    that starts in the future (not right now), and returns it formatted as a list of strings.
 
     Returns:
         list: A list containing a header and the next event's details. If no events are found,
@@ -193,25 +192,27 @@ def get_next_event():
         events_result = service.events().list(
             calendarId=cal_id,
             timeMin=now.isoformat(),
-            maxResults=1,
+            maxResults=3,
             singleEvents=True,
             orderBy='startTime'
         ).execute()
 
         events = events_result.get("items", [])
-        if events:
-            event = events[0]
+        for event in events:
             start_str = event['start'].get('dateTime', event['start'].get('date'))
             start_dt = datetime.fromisoformat(start_str).astimezone(timezone)
-            all_events.append((start_dt, event))
+
+            if start_dt > now:
+                all_events.append((start_dt, event))
+                break
 
     if not all_events:
-        return ["Keine Termine gefunden"]
+        return ["– Keine bevorstehenden Events gefunden"]
 
     all_events.sort(key=lambda x: x[0])
 
     next_event = all_events[0][1]
-    start = next_event['start'].get('dateTime', event['start'].get('date'))
+    start = next_event['start'].get('dateTime', next_event['start'].get('date'))
     summary = next_event.get("summary", "kein titel")
 
-    return ["Nächster Termin", f"– {start} Uhr: {summary}"]
+    return [f"– {start} Uhr: {summary}"]
