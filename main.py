@@ -5,7 +5,7 @@ This module starts the WhatsApp bot and the reminder service.
 It uses threads to run the reminder loop in parallel with message checking.
 """
 
-from services.new_twilio_api import check_new_messages, send_message
+from services.twilio_api import check_new_messages, send_message
 from services.google_calendar import reminder_loop
 import threading
 
