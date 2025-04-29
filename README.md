@@ -1,100 +1,120 @@
+<p align="center">
+  <img src="assets/Morning_Sync_Logo.jpg" alt="MorningSync Logo" width="400"/>
+</p>
+
 # MorningSync ☕️
 
-WhatsApp-gestützter Tagesplan-Assistent
+> WhatsApp appointments · Google Calendar
 
-> **"Wie sieht mein Tag heute aus?"**
+🇬🇧 English | 🇩🇪 [Deutsche Version](README.de.md)
 
-**MorningSync** ist ein smarter WhatsApp-Bot, der dir jeden Morgen automatisch deinen Tagesplan aus dem Google Kalender schickt – inklusive Wetter und passenden Empfehlungen. 
-Du kannst ihm schreiben wie einem Freund: "Was steht heute an?", "Was habe ich am Freitag?", oder einfach nur "Hey". MorningSync antwortet.
+---
+
+## "What’s on my schedule today?"
+
+**MorningSync** is a smart WhatsApp bot that sends you your daily schedule from Google Calendar every morning –
+including the weather and helpful tips.  
+You can chat with it like a friend: "What’s up today?", "What do I have on Friday?", or simply "Hey". MorningSync will
+reply.
 
 ---
 
 ## 🚀 Features
 
-- ✉️ WhatsApp-Integration via Twilio Conversations API
-- 🗓️ Tagesübersicht direkt aus deinem Google Kalender
-- ☔️ Wetterdaten aus OpenWeatherMap mit Kleidungstipps
-- 💬 Zwei-Wege-Kommunikation via Menü: Auswahl per 1–4
-- 📆 Täglicher Reminder zur gewählten Uhrzeit (siehe `.env`)
-- ⚙️ Modular aufgebaut & leicht erweiterbar
+- ✉️ WhatsApp integration via Twilio Conversations API
+- 🗓️ Daily overview pulled directly from your Google Calendar
+- ☔️ Weather data from OpenWeatherMap with clothing suggestions
+- 💬 Two-way menu-based interaction: choose via 1–4
+- 📆 Daily reminder at your preferred time (see `.env`)
+- ⚙️ Modular structure & easy to extend
 
 ---
 
-## 🤝 Beispiel-Antworten
+## 🤝 Example Replies
 
-**Keine Termine:**
-```
-📅 Keine Termine für heute.
-```
+**No events:**
 
-**Keine Termine morgen:**
 ```
-📅 Keine Termine für morgen.
+📅 No events for today.
 ```
 
-**Keine Termine diese Woche:**
-```
-📅 Keine Termine diese Woche.
-```
+**No events tomorrow:**
 
-**Mehrere Termine heute:**
 ```
-📅 Dein Tagesplan für Montag, 1. April:
-
-🕐 09:00 Uhr: Team-Standup (Zoom)
-🕓 15:30 Uhr: Arzttermin bei Dr. Müller
-🕖 18:00 Uhr: Fitness mit Lisa
-
-📝 Insgesamt 3 Termine heute.
-📆 Viel Erfolg!
+📅 No events for tomorrow.
 ```
 
-**Mit Wetterintegration:**
-```
-🌤 Wetter in Berlin:
-- 13–17°C, teilweise bewölkt
-- Kein Regen
-- Leichter Wind
+**No events this week:**
 
-🫕 Empfehlung:
-Du brauchst heute keine Jacke – aber vielleicht einen Pulli für den Nachmittag. 👕
+```
+📅 No events scheduled this week.
+```
+
+**Multiple events today:**
+
+```
+📅 Your schedule for Monday, April 1st:
+
+🕐 09:00: Team stand-up (Zoom)  
+🕓 15:30: Doctor’s appointment with Dr. Müller  
+🕖 18:00: Workout with Lisa  
+
+📝 A total of 3 events today.  
+📆 Good luck!
+```
+
+**With weather integration:**
+
+```
+🌤 Weather in Berlin:
+- 13–17°C, partly cloudy  
+- No rain  
+- Light wind  
+
+🫕 Suggestion:  
+No jacket needed today – but maybe bring a sweater for the afternoon. 👕
 ```
 
 ---
 
 ## 🛠️ Installation
 
-### Voraussetzungen
+### Requirements
+
 - Python 3.10+
-- Ein Google Cloud-Projekt mit aktivierter Calendar API
-- Twilio-Account mit Zugriff auf die Conversations API
-- OpenWeatherMap API Key
+- A Google Cloud project with Calendar API enabled
+- Twilio account with access to the Conversations API
+- OpenWeatherMap API key
 
 ### Setup
 
-1. **Repository klonen:**
+1. **Clone the repository:**
+
 ```bash
-git clone https://github.com/dein-team/morningsync.git
+git clone https://github.com/your-team/morningsync.git
 cd morningsync
 ```
 
-2. **Virtuelle Umgebung & Abhängigkeiten installieren:**
+2. **Create virtual environment & install dependencies:**
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. **credentials.json platzieren:**
-Lade deine `credentials.json` von Google Cloud herunter (OAuth2 mit Zugriff auf den Google Kalender) und lege sie im Hauptverzeichnis des Projekts ab.
+3. **Add `credentials.json`:**  
+   Download your `credentials.json` from Google Cloud (OAuth2 with access to Google Calendar) and place it in the root
+   project directory.
 
-4. **.env-Datei erstellen:**
+4. **Create your `.env` file:**
+
 ```env
-DAILY_REMINDER_TIME=08:00         # Zeitpunkt für den täglichen Reminder (z. B. 08:00 Uhr)
-CITY=Berlin                        # Stadt für Wetterinformationen
-INCLUDE_WEATHER_MESSAGE=True      # Wetteranzeige aktivieren
-INCLUDE_FUNNY_WEATHER=True        # Humorvolle Wetterkommentare aktivieren
-INCLUDE_OUTFIT_TIP=True           # Outfit-Tipps basierend auf Wetter aktivieren
+DAILY_REMINDER_TIME=08:00
+CITY=Berlin
+INCLUDE_WEATHER_MESSAGE=True
+INCLUDE_FUNNY_WEATHER=True
+INCLUDE_OUTFIT_TIP=True
 
 OPENWEATHER_API_KEY=
 
@@ -106,55 +126,58 @@ MY_PHONE_NUMBER=
 TWILIO_WHATSAPP_NUMBER=
 ```
 
-5. **Starten:**
+5. **Run the app:**
+
 ```bash
 python main.py
 ```
 
 ---
 
-## 🔄 Projektstruktur
+## 🔄 Project Structure
+
 ```
-├── main.py                     # Hauptprogramm: verarbeitet eingehende Nachrichten
+├── main.py
 ├── utils/
-│   └── formatter.py         # Nachrichtentemplates für WhatsApp
+│   └── formatter.py
 ├── services/
-│   ├── google_calendar.py   # Kalenderabfrage & Events sortieren
-│   ├── new_twilio_api.py    # Kommunikation mit Twilio Conversations API
-│   └── weather.py           # Wetterdaten via OpenWeatherMap
-├── credentials.json           # Google OAuth2 Client Credentials
+│   ├── google_calendar.py
+│   ├── new_twilio_api.py
+│   └── weather.py
+├── credentials.json
 ```
 
 ---
 
-## 📊 Ablauf
+## 📊 Flow
 
-1. Der Nutzer schreibt an WhatsApp.
-2. Der Bot sendet ein Auswahlmenü mit Optionen:
+1. User sends a WhatsApp message
+2. Bot responds with a menu of options:
+
 ```
-1 - Heutige Termine
-2 - Termine für morgen
-3 - Termine diese Woche
-4 - Nächster Termin
+1 - Today’s events  
+2 - Tomorrow’s events  
+3 - Events this week  
+4 - Next event
 ```
-3. Der Nutzer antwortet mit einer Zahl (1–4).
-4. Das System generiert die entsprechende Antwort:
-   - Kalendertermine abrufen
-   - Optional: Wetterdaten einbinden (je nach .env-Einstellung)
-5. Die Antwort wird über Twilio zurück an WhatsApp gesendet.
+
+3. User replies with a number (1–4)
+4. System generates the appropriate response
+5. Twilio sends the reply back via WhatsApp
 
 ---
 
-## 🌟 Erweiterungsideen
+## 🌟 Ideas for Extension
 
-- 🕐 Erinnerung 30 Minuten vor Terminen
-- 🌐 Zoom-/Videolinks automatisch mitschicken, falls in Terminen enthalten
-- 📊 Analyse der Woche ("Du hattest 12 Meetings...")
-- 📅 Termine direkt per WhatsApp anlegen
+- 🕐 Reminders 30 minutes before each event
+- 🌐 Auto-include Zoom/video links
+- 📊 Weekly summary ("You had 12 meetings...")
+- 📅 Add new events via WhatsApp
 
 ---
 
 ## 👨‍💼 Team MorningSync
+
 - Viktoria
 - Tom
 - Lukas
@@ -162,10 +185,8 @@ python main.py
 
 ---
 
-## ✨ Lizenz
+## ✨ License
+
 MIT License
 
----
-
-> Hackathon-Projekt für Master School, 2025. Powered by Python �\uddev
-
+> Hackathon project for Master School, 2025. Powered by Python 🐍
